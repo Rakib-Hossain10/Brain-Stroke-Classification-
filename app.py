@@ -8,14 +8,14 @@
 
 import json
 import os
-from typing import Dict, List, Tuple
+import inspect
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 import tensorflow as tf
 from PIL import Image, ImageOps
-import altair as alt
 
 
 # -----------------------------
@@ -121,7 +121,7 @@ div[data-testid="stDataFrame"] {
 }
 
 /* Reduce top padding */
-.block-container { padding-top: 1.4rem; padding-bottom: 2rem; }
+.block-container { padding-top: 3rem; padding-bottom: 2rem; }
 
 /* Footer */
 .footer {
@@ -135,17 +135,31 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 
 # -----------------------------
-# Files
+# Robust paths (Streamlit Cloud safe)
 # -----------------------------
-MODEL_PATH = "BrainStroke_resnet50.keras"
-METADATA_PATH = "BrainStroke_resnet50_metadata.json"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "BrainStroke_resnet50.keras")
+METADATA_PATH = os.path.join(BASE_DIR, "BrainStroke_resnet50_metadata.json")
 
 # Your fixed class order:
 CLASS_NAMES = ["Bleeding", "Ischemia", "Normal"]
 
 
 # -----------------------------
-# Helpers
+# Compatibility helpers
+# -----------------------------
+def st_image_auto(img, caption=None):
+    """Compatibility wrapper: supports both use_container_width and use_column_width."""
+    params = inspect.signature(st.image).parameters
+    if "use_container_width" in params:
+        st.image(img, caption=caption, use_container_width=True)
+    else:
+        # older Streamlit
+        st.image(img, caption=caption, use_column_width=True)
+
+
+# -----------------------------
+# Core helpers
 # -----------------------------
 def safe_read_json(path: str) -> Dict:
     if not os.path.exists(path):
@@ -188,7 +202,7 @@ def load_model(model_path: str):
     if not os.path.exists(model_path):
         raise FileNotFoundError(
             f"Model file not found: {model_path}\n"
-            f"Place '{os.path.basename(model_path)}' in the same folder as app.py."
+            f"Place 'BrainStroke_resnet50.keras' in the same folder as app.py."
         )
     return tf.keras.models.load_model(model_path)
 
@@ -273,7 +287,7 @@ with col_right:
     else:
         try:
             pil_img = Image.open(uploaded)
-            st.image(pil_img, caption=f"{uploaded.name}", use_container_width=True)
+            st_image_auto(pil_img, caption=f"{uploaded.name}")
             st.caption(f"Model input size: {input_hw[0]}×{input_hw[1]}")
         except Exception as e:
             st.error("Unable to read the uploaded image.")
@@ -299,11 +313,9 @@ if run_btn:
                 raw_pred = model.predict(x, verbose=0)
 
             pred_vec = np.asarray(raw_pred).squeeze()
-
             if pred_vec.ndim == 0:
                 pred_vec = np.array([float(pred_vec)])
 
-            # Expect multiclass (3). If not, handle generically.
             probs = softmax_if_needed(pred_vec)
 
             # Ensure label alignment
@@ -370,17 +382,15 @@ if run_btn:
                 with cB:
                     st.markdown('<div class="card">', unsafe_allow_html=True)
                     st.subheader("Chart")
-
                     chart_df = df.set_index("Class")
-                    st.bar_chart(chart_df, y="Probability") 
+                    st.bar_chart(chart_df, y="Probability")
                     st.markdown("</div>", unsafe_allow_html=True)
-
 
             if show_meta:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
                 st.subheader("Model & metadata")
-                st.write("**Model file:**", MODEL_PATH)
-                st.write("**Metadata file:**", METADATA_PATH)
+                st.write("**Model file:**", os.path.basename(MODEL_PATH))
+                st.write("**Metadata file:**", os.path.basename(METADATA_PATH))
                 st.write("**Class order used:**", class_names)
                 st.write("**Input size:**", f"{input_hw[0]}×{input_hw[1]}")
                 with st.expander("Show metadata JSON"):
