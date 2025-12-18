@@ -371,25 +371,10 @@ if run_btn:
                     st.markdown('<div class="card">', unsafe_allow_html=True)
                     st.subheader("Chart")
 
-                    chart = (
-                        alt.Chart(df)
-                        .mark_bar()
-                        .encode(
-                            x=alt.X("Class:N", sort=list(df["Class"])),
-                            y=alt.Y("Probability:Q", scale=alt.Scale(domain=[0, 1])),
-                            tooltip=["Class:N", alt.Tooltip("Probability:Q", format=".4f")],
-                        )
-                        .properties(height=320)
-                        .configure_axis(
-                            labelColor="#d7deea",
-                            titleColor="#d7deea",
-                            gridColor="rgba(255,255,255,0.08)",
-                        )
-                        .configure_view(strokeOpacity=0)
-                    )
-
-                    st.altair_chart(chart, use_container_width=True)
+                    chart_df = df.set_index("Class")
+                    st.bar_chart(chart_df, y="Probability") 
                     st.markdown("</div>", unsafe_allow_html=True)
+
 
             if show_meta:
                 st.markdown('<div class="card">', unsafe_allow_html=True)
