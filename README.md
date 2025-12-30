@@ -54,7 +54,7 @@ The model was fine-tuned on a labeled brain image dataset to learn discriminativ
 The application is deployed as a web-based interface using **Streamlit**, allowing users to interact with the model directly through a browser.
 
 ### Live Application
- *(Add your Streamlit deployment link here)*
+ *  https://brain-stroke-classification-rakib-hossain.streamlit.app/
 
 ---
 
