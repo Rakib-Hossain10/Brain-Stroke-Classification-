@@ -94,3 +94,10 @@ The application is deployed as a web-based interface using **Streamlit**, allowi
 
 
 **Disclaimer:** This project is developed for educational and research purposes only and must not be used for clinical diagnosis or medical decision-making.
+
+
+
+Here is the output:
+
+![Project Result 1](result_images/1.png)
+
